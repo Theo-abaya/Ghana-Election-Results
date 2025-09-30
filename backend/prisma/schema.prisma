@@ -1,15 +1,107 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(POLLING_OFFICER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  results Result[]
+}
+
+model Party {
+  id           String      @id @default(uuid())
+  name         String      @unique // National Democratic Congress
+  abbreviation String      @unique // NDC
+  color        String
+  logoUrl      String?
+  candidates   Candidate[]
+}
+
+model Candidate {
+  id             String        @id @default(uuid())
+  name           String
+  type           CandidateType
+  constituencyId String?
+  partyId        String
+
+  // Relations
+  party        Party         @relation(fields: [partyId], references: [id])
+  constituency Constituency? @relation(fields: [constituencyId], references: [id])
+  results      Result[]
+}
+
+model Constituency {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  region          Region
+  pollingStations PollingStation[]
+  candidates      Candidate[]
+}
+
+model PollingStation {
+  id             String  @id @default(uuid())
+  name           String
+  code           String  @unique
+  location       String?
+  constituencyId String
+
+  // Relations
+  constituency Constituency @relation(fields: [constituencyId], references: [id])
+  results      Result[]
+}
+
+model Result {
+  id               String   @id @default(uuid())
+  candidateId      String
+  pollingStationId String
+  userId           String
+  votes            Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  candidate      Candidate      @relation(fields: [candidateId], references: [id])
+  pollingStation PollingStation @relation(fields: [pollingStationId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  POLLING_OFFICER
+  VIEWER
+}
+
+enum CandidateType {
+  PRESIDENTIAL
+  PARLIAMENTARY
+}
+
+enum Region {
+  GREATER_ACCRA
+  ASHANTI
+  NORTHERN
+  WESTERN
+  EASTERN
+  CENTRAL
+  VOLTA
+  UPPER_EAST
+  UPPER_WEST
+  SAVANNAH
+  BONO
+  BONO_EAST
+  AHAFO
+  WESTERN_NORTH
+  OTI
+  NORTH_EAST
 }
