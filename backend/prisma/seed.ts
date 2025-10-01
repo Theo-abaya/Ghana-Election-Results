@@ -7,6 +7,7 @@ async function main() {
   console.log("🌱 Starting database seeding...");
 
   // --- Parties ---
+  console.log("📊 Creating parties...");
   await prisma.party.createMany({
     data: [
       {
@@ -35,7 +36,11 @@ async function main() {
   const ndc = await prisma.party.findUnique({ where: { abbreviation: "NDC" } });
   const cpp = await prisma.party.findUnique({ where: { abbreviation: "CPP" } });
 
+  const partyCount = await prisma.party.count();
+  console.log(`✅ Created ${partyCount} parties`);
+
   // --- Constituencies ---
+  console.log("🗺️  Creating constituencies...");
   const accra = await prisma.constituency.upsert({
     where: { name: "Accra Central" },
     update: {},
@@ -54,22 +59,26 @@ async function main() {
     },
   });
 
+  const constituencyCount = await prisma.constituency.count();
+  console.log(`✅ Created ${constituencyCount} constituencies`);
+
   // --- Presidential Candidates (3 parties) ---
+  console.log("🎯 Creating presidential candidates...");
   if (npp && ndc && cpp) {
     await prisma.candidate.createMany({
       data: [
         {
-          name: "Nana Akufo-Addo",
+          name: "Mahamudu Bawumia",
           type: CandidateType.PRESIDENTIAL,
           partyId: npp.id,
         },
         {
-          name: "John Mahama",
+          name: "John Dramani Mahama",
           type: CandidateType.PRESIDENTIAL,
           partyId: ndc.id,
         },
         {
-          name: "Ivor Greenstreet",
+          name: "Nana Akosua Frimpomaa Sarpong-Kumankumah",
           type: CandidateType.PRESIDENTIAL,
           partyId: cpp.id,
         },
@@ -78,7 +87,13 @@ async function main() {
     });
   }
 
+  const presidentialCount = await prisma.candidate.count({
+    where: { type: CandidateType.PRESIDENTIAL },
+  });
+  console.log(`✅ Created ${presidentialCount} presidential candidates`);
+
   // --- Parliamentary Candidates for Accra (3) ---
+  console.log("🏛️  Creating parliamentary candidates...");
   if (npp && ndc && cpp) {
     await prisma.candidate.createMany({
       data: [
@@ -132,7 +147,13 @@ async function main() {
     });
   }
 
+  const parliamentaryCount = await prisma.candidate.count({
+    where: { type: CandidateType.PARLIAMENTARY },
+  });
+  console.log(`✅ Created ${parliamentaryCount} parliamentary candidates`);
+
   // --- Polling Stations ---
+  console.log("🗳️  Creating polling stations...");
   await prisma.pollingStation.createMany({
     data: [
       {
@@ -163,7 +184,11 @@ async function main() {
     skipDuplicates: true,
   });
 
+  const pollingStationCount = await prisma.pollingStation.count();
+  console.log(`✅ Created ${pollingStationCount} polling stations`);
+
   // --- Admin User ---
+  console.log("👤 Creating admin user...");
   const hashedPassword = await bcrypt.hash("admin123", 10);
   await prisma.user.upsert({
     where: { email: "admin@example.com" },
@@ -175,11 +200,28 @@ async function main() {
     },
   });
 
-  console.log("✅ Seeding complete!");
+  const userCount = await prisma.user.count();
+  console.log(`✅ Created ${userCount} user(s)`);
+
+  console.log("\n🎉 Seeding complete!");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📈 Summary:");
+  console.log(`   Parties: ${partyCount}`);
+  console.log(`   Constituencies: ${constituencyCount}`);
+  console.log(`   Presidential Candidates: ${presidentialCount}`);
+  console.log(`   Parliamentary Candidates: ${parliamentaryCount}`);
+  console.log(`   Polling Stations: ${pollingStationCount}`);
+  console.log(`   Users: ${userCount}`);
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("\n🔐 Admin Credentials:");
+  console.log("   Email: admin@example.com");
+  console.log("   Password: admin123");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 }
 
 main()
   .catch(async (e) => {
+    console.error("❌ Seeding failed:");
     console.error(e);
     await prisma.$disconnect();
     process.exit(1);
