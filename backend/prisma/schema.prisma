@@ -16,7 +16,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  results Result[]
+  results   Result[]
+  auditLogs AuditLog[]
 }
 
 model Party {
@@ -74,6 +75,22 @@ model Result {
   candidate      Candidate      @relation(fields: [candidateId], references: [id])
   pollingStation PollingStation @relation(fields: [pollingStationId], references: [id])
   user           User           @relation(fields: [userId], references: [id])
+
+  @@unique([candidateId, pollingStationId]) // ✅ Only one result per candidate per station
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String   // e.g. "RESULT_UPDATED"
+  entity    String   // e.g. "Result"
+  entityId  String   // e.g. result id
+  oldValue  Json?
+  newValue  Json?
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
 }
 
 enum Role {

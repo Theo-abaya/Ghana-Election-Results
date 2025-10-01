@@ -4,13 +4,13 @@ import {
   getPresidentialCandidates,
   getParliamentaryCandidates,
 } from "../controllers/candidateController";
-import { authenticateJWT, authorize } from "../middlewares/authMiddleware";
+import { authenticateJWT, authorizeRole } from "../middlewares/authMiddleware";
 import { Role } from "@prisma/client";
 
 const router = Router();
 
 // Admin-only
-router.post("/", authenticateJWT, authorize([Role.ADMIN]), createCandidate);
+router.post("/", authenticateJWT, authorizeRole([Role.ADMIN]), createCandidate);
 
 // Public
 router.get("/presidential", getPresidentialCandidates);

@@ -1,3 +1,4 @@
+// src/routes/resultRoutes.ts
 import { Router } from "express";
 import {
   submitResult,
@@ -6,26 +7,26 @@ import {
   getParliamentaryResults,
   getResultsByRegion,
 } from "../controllers/resultController";
-import { authenticateJWT, authorize } from "../middlewares/authMiddleware";
+import { authenticateJWT, authorizeRole } from "../middlewares/authMiddleware";
 import { Role } from "@prisma/client";
 
 const router = Router();
 
-// Polling Officers only
+// ✅ Polling Officer only: submit & update results
 router.post(
   "/",
   authenticateJWT,
-  authorize([Role.POLLING_OFFICER]),
+  authorizeRole([Role.POLLING_OFFICER]),
   submitResult
 );
 router.put(
   "/:id",
   authenticateJWT,
-  authorize([Role.POLLING_OFFICER]),
+  authorizeRole([Role.POLLING_OFFICER]),
   updateResult
 );
 
-// Public
+// ✅ Public (anyone can view)
 router.get("/presidential", getPresidentialResults);
 router.get("/parliamentary/:constituencyId", getParliamentaryResults);
 router.get("/region/:region", getResultsByRegion);

@@ -29,8 +29,7 @@ import {
   getResultsByRegion,
 } from "../controllers/resultController";
 
-// Middlewares
-import { authenticateJWT, authorize } from "../middlewares/authMiddleware";
+import { authenticateJWT, authorizeRole } from "../middlewares/authMiddleware";
 import { Role } from "@prisma/client";
 
 const router = Router();
@@ -43,13 +42,18 @@ router.get("/", (_req, res) => {
 //
 // USERS (Admin only)
 //
-router.post("/users", authenticateJWT, authorize([Role.ADMIN]), createUser);
-router.get("/users", authenticateJWT, authorize([Role.ADMIN]), getUsers);
-router.put("/users/:id", authenticateJWT, authorize([Role.ADMIN]), updateUser);
+router.post("/users", authenticateJWT, authorizeRole([Role.ADMIN]), createUser);
+router.get("/users", authenticateJWT, authorizeRole([Role.ADMIN]), getUsers);
+router.put(
+  "/users/:id",
+  authenticateJWT,
+  authorizeRole([Role.ADMIN]),
+  updateUser
+);
 router.delete(
   "/users/:id",
   authenticateJWT,
-  authorize([Role.ADMIN]),
+  authorizeRole([Role.ADMIN]),
   deleteUser
 );
 
@@ -59,7 +63,7 @@ router.delete(
 router.post(
   "/candidates",
   authenticateJWT,
-  authorize([Role.ADMIN]),
+  authorizeRole([Role.ADMIN]),
   createCandidate
 );
 router.get("/candidates/presidential", getPresidentialCandidates);
@@ -74,7 +78,7 @@ router.get(
 router.post(
   "/constituencies",
   authenticateJWT,
-  authorize([Role.ADMIN]),
+  authorizeRole([Role.ADMIN]),
   createConstituency
 );
 router.get("/constituencies", getConstituencies);
@@ -85,7 +89,7 @@ router.get("/constituencies", getConstituencies);
 router.post(
   "/polling-stations",
   authenticateJWT,
-  authorize([Role.ADMIN]),
+  authorizeRole([Role.ADMIN]),
   createPollingStation
 );
 router.get("/polling-stations/:constituencyId", getPollingStations);
@@ -96,13 +100,13 @@ router.get("/polling-stations/:constituencyId", getPollingStations);
 router.post(
   "/results",
   authenticateJWT,
-  authorize([Role.POLLING_OFFICER]),
+  authorizeRole([Role.POLLING_OFFICER]),
   submitResult
 );
 router.put(
   "/results/:id",
   authenticateJWT,
-  authorize([Role.POLLING_OFFICER]),
+  authorizeRole([Role.POLLING_OFFICER]),
   updateResult
 );
 
