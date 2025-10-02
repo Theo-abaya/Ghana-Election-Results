@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
-import { Home, Vote, Users, Globe } from "lucide-react";
+import { Vote, Users, Globe } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,7 +11,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const location = useLocation();
 
   const navItems = [
-    { name: "Dashboard", path: "/", icon: <Home size={18} /> },
     { name: "Presidential", path: "/presidential", icon: <Vote size={18} /> },
     {
       name: "Parliamentary",
