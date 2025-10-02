@@ -10,27 +10,29 @@ import { Role } from "@prisma/client";
 
 const router = Router();
 
-// Public: get all polling stations
-router.get(
-  "/",
-  authenticateJWT,
-  authorizeRole([Role.ADMIN, Role.POLLING_OFFICER, Role.VIEWER]),
-  getPollingStations
-);
+// GET /api/polling-stations - Get all polling stations (Authenticated users)
+router.get("/", authenticateJWT, getPollingStations);
 
-// Admin-only
+// GET /api/polling-stations/:constituencyId - Get polling stations by constituency
+router.get("/:constituencyId", authenticateJWT, getPollingStations);
+
+// POST /api/polling-stations - Create polling station (Admin only)
 router.post(
   "/",
   authenticateJWT,
   authorizeRole([Role.ADMIN]),
   createPollingStation
 );
+
+// PUT /api/polling-stations/:id - Update polling station (Admin only)
 router.put(
   "/:id",
   authenticateJWT,
   authorizeRole([Role.ADMIN]),
   updatePollingStation
 );
+
+// DELETE /api/polling-stations/:id - Delete polling station (Admin only)
 router.delete(
   "/:id",
   authenticateJWT,

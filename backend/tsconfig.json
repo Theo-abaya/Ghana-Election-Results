@@ -5,7 +5,10 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "strict": true,
     "outDir": "dist",
-    "strict": true
-  }
+    "resolveJsonModule": true, // ✅ Allows importing JSON files if needed
+    "forceConsistentCasingInFileNames": true // ✅ Helps avoid import path issues
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"] // ✅ Ensure Jest sees your test files
 }

@@ -9,11 +9,13 @@ import { Role } from "@prisma/client";
 
 const router = Router();
 
-// Admin-only
+// POST /api/candidates - Create candidate (Admin only)
 router.post("/", authenticateJWT, authorizeRole([Role.ADMIN]), createCandidate);
 
-// Public
+// GET /api/candidates/presidential - Get all presidential candidates
 router.get("/presidential", getPresidentialCandidates);
+
+// GET /api/candidates/parliamentary/:constituencyId - Get parliamentary candidates by constituency
 router.get("/parliamentary/:constituencyId", getParliamentaryCandidates);
 
 export default router;

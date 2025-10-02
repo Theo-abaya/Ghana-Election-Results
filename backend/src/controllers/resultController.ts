@@ -46,7 +46,7 @@ export const submitResult = async (
           action: "RESULT_CREATED",
           entity: "Result",
           entityId: created.id,
-          oldValue: null,
+          oldValue: 0,
           newValue: { votes },
           userId,
         },
@@ -148,7 +148,7 @@ export const deleteResult = async (
           entity: "Result",
           entityId: id,
           oldValue: { votes: existing.votes },
-          newValue: null,
+          newValue: 0,
           userId,
         },
       });

@@ -1,4 +1,3 @@
-// src/routes/resultRoutes.ts
 import { Router } from "express";
 import {
   submitResult,
@@ -12,7 +11,7 @@ import { Role } from "@prisma/client";
 
 const router = Router();
 
-// ✅ Polling Officer only: submit & update results
+// Officers only
 router.post(
   "/",
   authenticateJWT,
@@ -26,7 +25,7 @@ router.put(
   updateResult
 );
 
-// ✅ Public (anyone can view)
+// Public
 router.get("/presidential", getPresidentialResults);
 router.get("/parliamentary/:constituencyId", getParliamentaryResults);
 router.get("/region/:region", getResultsByRegion);

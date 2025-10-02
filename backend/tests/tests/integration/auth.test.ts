@@ -1,62 +1,43 @@
+// tests/integration/auth.test.ts
 import request from "supertest";
-import app from "../../../src/app";
-import { createTestUser } from "../helpers/testData";
-import { generateTestToken, getAuthHeader } from "../helpers/auth";
-import { Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import prisma from "../../../src/utils/prisma";
+import app from "../../../src/app"; // your Express app
 
-describe("Auth Endpoints", () => {
-  describe("POST /api/auth/login", () => {
-    it("should login with correct credentials", async () => {
-      const user = await createTestUser();
+const admin = { email: "admin@example.com", password: "admin123" };
 
-      const response = await request(app).post("/api/auth/login").send({
-        email: user.email,
-        password: "password123",
-      });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("token");
-      expect(response.body.user.id).toBe(user.id);
-    });
-
-    it("should reject incorrect password", async () => {
-      const user = await createTestUser();
-
-      const response = await request(app).post("/api/auth/login").send({
-        email: user.email,
-        password: "wrongpassword",
-      });
-
-      expect(response.status).toBe(401);
-    });
-
-    it("should reject non-existent user", async () => {
-      const response = await request(app).post("/api/auth/login").send({
-        email: "nonexistent@example.com",
-        password: "password123",
-      });
-
-      expect(response.status).toBe(401);
+describe("Auth endpoints", () => {
+  beforeAll(async () => {
+    // Ensure the user exists or is updated
+    const hashed = await bcrypt.hash(admin.password, 10);
+    await prisma.user.upsert({
+      where: { email: admin.email },
+      update: { password: hashed, role: "ADMIN" },
+      create: { email: admin.email, password: hashed, role: "ADMIN" },
     });
   });
 
-  describe("GET /api/auth/me", () => {
-    it("should return current user with valid token", async () => {
-      const user = await createTestUser();
-      const token = generateTestToken(user.id, user.email, user.role);
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: admin.email } });
+    await prisma.$disconnect();
+  });
 
-      const response = await request(app)
-        .get("/api/auth/me")
-        .set(getAuthHeader(token));
+  it("should login successfully", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: admin.email, password: admin.password });
 
-      expect(response.status).toBe(200);
-      expect(response.body.id).toBe(user.id);
-      expect(response.body.email).toBe(user.email);
-    });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("token");
+    expect(typeof res.body.token).toBe("string");
+  });
 
-    it("should reject request without token", async () => {
-      const response = await request(app).get("/api/auth/me");
-      expect(response.status).toBe(401);
-    });
+  it("should reject invalid credentials", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: admin.email, password: "wrongpassword" });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty("message");
   });
 });

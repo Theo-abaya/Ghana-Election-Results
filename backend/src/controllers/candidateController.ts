@@ -1,4 +1,3 @@
-// src/controllers/candidateController.ts
 import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prisma";
 import { CandidateType } from "@prisma/client";
@@ -38,7 +37,10 @@ export const getParliamentaryCandidates = async (
     }
 
     const candidates = await prisma.candidate.findMany({
-      where: { type: CandidateType.PARLIAMENTARY, constituencyId },
+      where: {
+        type: CandidateType.PARLIAMENTARY,
+        constituencyId: constituencyId, // ✅ No parseInt needed
+      },
       include: { party: true, constituency: true },
     });
 
@@ -76,11 +78,9 @@ export const createCandidate = async (
       return res.status(404).json({ message: "Party not found" });
 
     if (type === "PARLIAMENTARY" && !constituencyId) {
-      return res
-        .status(400)
-        .json({
-          message: "constituencyId is required for parliamentary candidates",
-        });
+      return res.status(400).json({
+        message: "constituencyId is required for parliamentary candidates",
+      });
     }
 
     if (constituencyId) {
@@ -92,7 +92,12 @@ export const createCandidate = async (
     }
 
     const candidate = await prisma.candidate.create({
-      data: { name, type: type as CandidateType, partyId, constituencyId },
+      data: {
+        name,
+        type: type as CandidateType,
+        partyId, // ✅ No parseInt needed - ID is already string
+        constituencyId: type === "PARLIAMENTARY" ? constituencyId : null, // ✅ No parseInt needed
+      },
       include: { party: true, constituency: true },
     });
 

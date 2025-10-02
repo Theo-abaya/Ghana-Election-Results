@@ -4,12 +4,14 @@
   "description": "",
   "main": "app.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma": "prisma",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "test:watch": "NODE_ENV=test jest --watch --runInBand",
+    "test:coverage": "NODE_ENV=test jest --coverage --runInBand",
+    "test": "cross-env NODE_ENV=test DATABASE_URL='postgresql://postgres:postgres@localhost:5432/elections_test' jest --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +34,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.6.0",
     "@types/supertest": "^6.0.3",
+    "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "prisma": "^5.19.1",
     "supertest": "^7.1.4",
