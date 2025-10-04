@@ -1,5 +1,5 @@
 // src/services/candidates.ts
-import api from "../api/axios";
+import api from "./api";
 
 export async function getPresidentialCandidates() {
   const { data } = await api.get("/candidates/presidential");
