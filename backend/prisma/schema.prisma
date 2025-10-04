@@ -55,6 +55,8 @@ model PollingStation {
   name           String
   code           String  @unique
   location       String?
+  registeredVoters  Int     @default(0)  
+  rejectedVotes     Int     @default(0)
   constituencyId String
 
   // Relations
