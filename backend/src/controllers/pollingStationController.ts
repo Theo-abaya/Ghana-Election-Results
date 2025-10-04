@@ -1,58 +1,100 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prisma";
 
-// Get all polling stations OR by constituency
-export const getPollingStations = async (
+/**
+ * Get all polling stations
+ */
+export const getAllPollingStations = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { constituencyId } = req.params;
+    const { constituencyId } = req.query;
 
-    // If constituencyId is provided, filter by constituency
-    if (constituencyId) {
-      const stations = await prisma.pollingStation.findMany({
-        where: { constituencyId },
-        include: {
-          constituency: true,
-          results: true,
-        },
-      });
-      return res.json(stations);
-    }
+    const where = constituencyId
+      ? { constituencyId: constituencyId as string }
+      : {};
 
-    // Otherwise, get all polling stations
-    const stations = await prisma.pollingStation.findMany({
+    const pollingStations = await prisma.pollingStation.findMany({
+      where,
       include: {
-        constituency: true,
-        results: true,
+        constituency: {
+          select: {
+            id: true,
+            name: true,
+            region: true,
+          },
+        },
       },
       orderBy: {
-        name: "asc",
+        code: "asc",
       },
     });
-    res.json(stations);
+
+    res.json(pollingStations);
   } catch (err) {
     next(err);
   }
 };
 
-// Create a polling station (Admin only)
+/**
+ * Get single polling station
+ */
+export const getPollingStationById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    const pollingStation = await prisma.pollingStation.findUnique({
+      where: { id },
+      include: {
+        constituency: {
+          select: {
+            id: true,
+            name: true,
+            region: true,
+          },
+        },
+        results: {
+          include: {
+            candidate: {
+              include: {
+                party: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!pollingStation) {
+      return res.status(404).json({ message: "Polling station not found" });
+    }
+
+    res.json(pollingStation);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Create a new polling station (Admin only)
+ */
 export const createPollingStation = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { name, code, location, constituencyId } = req.body;
+    const { code, name, constituencyId, location } = req.body;
 
-    console.log("📦 Creating polling station with data:", req.body);
-
-    // Validate required fields
-    if (!name || !code || !constituencyId) {
+    if (!code || !name || !constituencyId) {
       return res.status(400).json({
-        message: "Name, code, and constituencyId are required",
+        message: "code, name, and constituencyId are required",
       });
     }
 
@@ -62,86 +104,28 @@ export const createPollingStation = async (
     });
 
     if (!constituency) {
-      return res.status(400).json({
-        message: "Constituency not found",
-      });
+      return res.status(404).json({ message: "Constituency not found" });
     }
 
-    // Check if code already exists
-    const existingStation = await prisma.pollingStation.findUnique({
-      where: { code },
-    });
-
-    if (existingStation) {
-      return res.status(400).json({
-        message: "Polling station code already exists",
-      });
-    }
-
-    const station = await prisma.pollingStation.create({
+    const pollingStation = await prisma.pollingStation.create({
       data: {
-        name,
         code,
-        location,
+        name,
         constituencyId,
+        location: location || null,
       },
       include: {
         constituency: true,
       },
     });
 
-    res.status(201).json(station);
+    res.status(201).json(pollingStation);
   } catch (err: any) {
-    console.error("❌ Error creating polling station:", err);
-
     if (err.code === "P2002") {
-      return res.status(400).json({
-        message: "Polling station code already exists",
-      });
+      return res
+        .status(409)
+        .json({ message: "Polling station code already exists" });
     }
-
-    next(err);
-  }
-};
-
-// Update a polling station (Admin only)
-export const updatePollingStation = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { id } = req.params;
-    const { name, code, location, constituencyId } = req.body;
-
-    if (!name || !code || !constituencyId) {
-      return res.status(400).json({
-        message: "Name, code, and constituencyId are required for update",
-      });
-    }
-
-    const updated = await prisma.pollingStation.update({
-      where: { id },
-      data: { name, code, location, constituencyId },
-    });
-
-    res.json(updated);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// Delete a polling station (Admin only)
-export const deletePollingStation = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { id } = req.params;
-    await prisma.pollingStation.delete({ where: { id } });
-    res.json({ message: "Polling station deleted successfully" });
-  } catch (err) {
     next(err);
   }
 };
