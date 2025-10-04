@@ -4,14 +4,7 @@ import constituencyRoutes from "./constituencyRoutes";
 import pollingStationRoutes from "./pollingStationRoutes";
 import resultRoutes from "./resultRoutes";
 import partyRoutes from "./partyRoutes";
-import {
-  createUser,
-  getUsers,
-  updateUser,
-  deleteUser,
-} from "../controllers/userController";
-import { authenticateJWT, authorizeRole } from "../middlewares/authMiddleware";
-import { Role } from "@prisma/client";
+import regionRoutes from "./regionRoutes";
 
 const router = Router();
 
@@ -20,27 +13,17 @@ router.get("/", (_req, res) => {
   res.json({ message: "Welcome to Ghana Elections API 🚀" });
 });
 
-// USERS (Admin only)
-router.post("/users", authenticateJWT, authorizeRole([Role.ADMIN]), createUser);
-router.get("/users", authenticateJWT, authorizeRole([Role.ADMIN]), getUsers);
-router.put(
-  "/users/:id",
-  authenticateJWT,
-  authorizeRole([Role.ADMIN]),
-  updateUser
-);
-router.delete(
-  "/users/:id",
-  authenticateJWT,
-  authorizeRole([Role.ADMIN]),
-  deleteUser
-);
-
-// Mount feature routers
+// API routes
 router.use("/candidates", candidateRoutes);
+router.use("/results", resultRoutes);
+router.use("/regions", regionRoutes);
 router.use("/constituencies", constituencyRoutes);
 router.use("/polling-stations", pollingStationRoutes);
-router.use("/results", resultRoutes);
 router.use("/parties", partyRoutes);
+
+// 404 handler for undefined routes - FIXED
+router.use((_req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
 
 export default router;
