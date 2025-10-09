@@ -1,5 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prisma";
+import { AuthRequest } from "../middlewares/authMiddleware";
+import { Role } from "@prisma/client";
+
+/**
+ * Check if user is admin
+ */
+const requireAdmin = (req: AuthRequest, res: Response): boolean => {
+  if (!req.user || req.user.role !== Role.ADMIN) {
+    res.status(403).json({ message: "Admin access required" });
+    return false;
+  }
+  return true;
+};
 
 /**
  * Get all political parties
@@ -95,5 +108,77 @@ export const createParty = async (
       });
     }
     next(err);
+  }
+};
+
+/**
+ * Update party (Admin only)
+ */
+export const updateParty = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const { id } = req.params;
+    const { name, abbreviation, color, logoUrl } = req.body;
+
+    const party = await prisma.party.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(abbreviation && { abbreviation }),
+        ...(color && { color }),
+        ...(logoUrl !== undefined && { logoUrl }),
+      },
+    });
+
+    return res.json({
+      message: "Party updated successfully",
+      party,
+    });
+  } catch (error: any) {
+    console.error("Update party error:", error);
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Party not found" });
+    }
+    if (error.code === "P2002") {
+      return res.status(409).json({
+        message: "Party with this name or abbreviation already exists",
+      });
+    }
+    return res.status(500).json({ message: "Failed to update party" });
+  }
+};
+
+/**
+ * Delete party (Admin only)
+ */
+export const deleteParty = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const { id } = req.params;
+
+    // Check if party has candidates
+    const candidatesCount = await prisma.candidate.count({
+      where: { partyId: id },
+    });
+
+    if (candidatesCount > 0) {
+      return res.status(400).json({
+        message: `Cannot delete party with ${candidatesCount} candidate(s). Remove candidates first.`,
+      });
+    }
+
+    await prisma.party.delete({
+      where: { id },
+    });
+
+    return res.json({ message: "Party deleted successfully" });
+  } catch (error: any) {
+    console.error("Delete party error:", error);
+    if (error.code === "P2025") {
+      return res.status(404).json({ message: "Party not found" });
+    }
+    return res.status(500).json({ message: "Failed to delete party" });
   }
 };
