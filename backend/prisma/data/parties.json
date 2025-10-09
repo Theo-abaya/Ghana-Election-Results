@@ -1,0 +1,42 @@
+[
+  {
+    "name": "New Patriotic Party",
+    "abbreviation": "NPP",
+    "color": "#0066CC"
+  },
+  {
+    "name": "National Democratic Congress",
+    "abbreviation": "NDC",
+    "color": "#006B3F"
+  },
+  {
+    "name": "Convention People's Party",
+    "abbreviation": "CPP",
+    "color": "#DC2626"
+  },
+  {
+    "name": "People's National Convention",
+    "abbreviation": "PNC",
+    "color": "#00CC00"
+  },
+  {
+    "name": "Progressive People's Party",
+    "abbreviation": "PPP",
+    "color": "#FF6600"
+  },
+  {
+    "name": "Ghana Freedom Party",
+    "abbreviation": "GFP",
+    "color": "#FFD700"
+  },
+  {
+    "name": "Liberal Party of Ghana",
+    "abbreviation": "LPG",
+    "color": "#9933CC"
+  },
+  {
+    "name": "Independent",
+    "abbreviation": "IND",
+    "color": "#808080"
+  }
+]

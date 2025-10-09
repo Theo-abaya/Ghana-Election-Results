@@ -1,5 +1,7 @@
-import { PrismaClient, CandidateType, Region, Role } from "@prisma/client";
+import { PrismaClient, CandidateType, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import * as fs from "fs";
+import * as path from "path";
 
 const prisma = new PrismaClient();
 
@@ -18,43 +20,54 @@ async function main() {
   await prisma.party.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Create Parties
+  // 2. Load JSON data
+  console.log("📦 Loading data from JSON files...");
+  const partiesData = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "data/parties.json"), "utf-8")
+  );
+  const constituenciesData = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "data/constituencies.json"), "utf-8")
+  );
+
+  // 3. Create Parties from JSON
   console.log("Creating parties...");
-  const npp = await prisma.party.create({
-    data: {
-      name: "New Patriotic Party",
-      abbreviation: "NPP",
-      color: "#0066CC",
-    },
-  });
+  const createdParties = [];
+  for (const partyData of partiesData) {
+    const party = await prisma.party.upsert({
+      where: { abbreviation: partyData.abbreviation },
+      update: {},
+      create: partyData,
+    });
+    createdParties.push(party);
+  }
 
-  const ndc = await prisma.party.create({
-    data: {
-      name: "National Democratic Congress",
-      abbreviation: "NDC",
-      color: "#006B3F",
-    },
-  });
+  console.log(`✅ Created ${createdParties.length} parties`);
 
-  const cpp = await prisma.party.create({
-    data: {
-      name: "Convention People's Party",
-      abbreviation: "CPP",
-      color: "#DC2626",
-    },
-  });
+  // Get NPP, NDC, CPP for candidates
+  const npp = createdParties.find((p) => p.abbreviation === "NPP")!;
+  const ndc = createdParties.find((p) => p.abbreviation === "NDC")!;
+  const cpp = createdParties.find((p) => p.abbreviation === "CPP")!;
 
-  // 3. Create Constituencies
+  // 4. Create Constituencies from JSON
   console.log("Creating constituencies...");
-  const accra = await prisma.constituency.create({
-    data: { name: "Accra Central", region: Region.GREATER_ACCRA },
-  });
+  const createdConstituencies = [];
+  for (const constituencyData of constituenciesData) {
+    const constituency = await prisma.constituency.upsert({
+      where: { name: constituencyData.name },
+      update: {},
+      create: constituencyData,
+    });
+    createdConstituencies.push(constituency);
+  }
+  console.log(`✅ Created ${createdConstituencies.length} constituencies`);
 
-  const kumasi = await prisma.constituency.create({
-    data: { name: "Kumasi South", region: Region.ASHANTI },
-  });
+  // Get first two constituencies for demo data
+  const accra = createdConstituencies[0];
+  const kumasi =
+    createdConstituencies.find((c) => c.name.includes("Kumasi")) ||
+    createdConstituencies[1];
 
-  // 4. Create Presidential Candidates
+  // 5. Create Presidential Candidates
   console.log("Creating presidential candidates...");
   const bawumia = await prisma.candidate.create({
     data: {
@@ -80,9 +93,8 @@ async function main() {
     },
   });
 
-  // 5. Create Parliamentary Candidates
+  // 6. Create Parliamentary Candidates
   console.log("Creating parliamentary candidates...");
-  // Accra Central
   await prisma.candidate.createMany({
     data: [
       {
@@ -97,12 +109,6 @@ async function main() {
         constituencyId: accra.id,
         partyId: ndc.id,
       },
-    ],
-  });
-
-  // Kumasi South
-  await prisma.candidate.createMany({
-    data: [
       {
         name: "Kwame Owusu",
         type: CandidateType.PARLIAMENTARY,
@@ -118,7 +124,7 @@ async function main() {
     ],
   });
 
-  // 6. Create Polling Stations
+  // 7. Create Polling Stations
   console.log("Creating polling stations...");
   const stations = [
     await prisma.pollingStation.create({
@@ -163,7 +169,7 @@ async function main() {
     }),
   ];
 
-  // 7. Create Users
+  // 8. Create Users
   console.log("Creating users...");
   const admin = await prisma.user.create({
     data: {
@@ -181,9 +187,8 @@ async function main() {
     },
   });
 
-  // 8. Generate Realistic Results
+  // 9. Generate Realistic Results
   console.log("Generating vote results...");
-
   const presidentialCandidates = [bawumia, mahama, cppCandidate];
 
   for (const station of stations) {
@@ -225,8 +230,8 @@ async function main() {
   console.log("   Officer: officer@electionhub.com / Officer@123");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("📊 Data Created:");
-  console.log("   Parties: 3 (NPP, NDC, CPP)");
-  console.log("   Constituencies: 2");
+  console.log(`   Parties: ${createdParties.length}`);
+  console.log(`   Constituencies: ${createdConstituencies.length}`);
   console.log("   Polling Stations: 5");
   console.log("   Presidential Candidates: 3");
   console.log("   Parliamentary Candidates: 4");

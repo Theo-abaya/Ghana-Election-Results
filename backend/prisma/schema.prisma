@@ -83,16 +83,16 @@ model Result {
 
 model AuditLog {
   id        String   @id @default(uuid())
-  action    String   // e.g. "RESULT_UPDATED"
-  entity    String   // e.g. "Result"
-  entityId  String   // e.g. result id
-  oldValue  Json?
-  newValue  Json?
   userId    String
+  action    String
+  details   String   @db.Text
   createdAt DateTime @default(now())
 
   // Relations
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum Role {
@@ -123,4 +123,14 @@ enum Region {
   WESTERN_NORTH
   OTI
   NORTH_EAST
+}
+
+model SystemSettings {
+  id                     String   @id @default(uuid())
+  allowResultSubmission  Boolean  @default(true)
+  requireApproval        Boolean  @default(false)
+  enableNotifications    Boolean  @default(true)
+  maintenanceMode        Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
