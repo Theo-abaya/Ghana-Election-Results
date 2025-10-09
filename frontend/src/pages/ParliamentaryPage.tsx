@@ -6,6 +6,10 @@ import {
   AlertTriangle,
   Wifi,
   WifiOff,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
@@ -27,6 +31,10 @@ export default function ParliamentaryPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   const regions = [
     { value: "all", label: "All Regions" },
@@ -80,6 +88,11 @@ export default function ParliamentaryPage() {
     fetchConstituencies();
   }, [selectedRegion]);
 
+  // Reset to first page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedRegion]);
+
   const fetchConstituencies = async () => {
     try {
       setLoading(true);
@@ -131,6 +144,15 @@ export default function ParliamentaryPage() {
       c.region.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredConstituencies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentConstituencies = filteredConstituencies.slice(
+    startIndex,
+    endIndex
+  );
+
   const stats = {
     totalSeats: 275,
     nppSeats: 137,
@@ -160,6 +182,117 @@ export default function ParliamentaryPage() {
       );
     }
     return null;
+  };
+
+  // Pagination controls component
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 bg-white border-t border-gray-200">
+        {/* Mobile: Simple page info */}
+        <div className="flex items-center gap-2 text-sm text-gray-700 sm:hidden">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+        </div>
+
+        {/* Desktop: Full pagination controls */}
+        <div className="hidden sm:flex items-center gap-2">
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="First page"
+          >
+            <ChevronsLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {/* Page numbers */}
+          <div className="flex items-center gap-1 mx-2">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              // Show pages around current page
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`min-w-[2rem] px-2 py-1 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-green-600 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Last page"
+          >
+            <ChevronsRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Page info */}
+        <div className="text-sm text-gray-600 hidden sm:block">
+          Showing {startIndex + 1}-
+          {Math.min(endIndex, filteredConstituencies.length)} of{" "}
+          {filteredConstituencies.length} constituencies
+        </div>
+
+        {/* Mobile: Next/Prev buttons */}
+        <div className="flex items-center gap-2 sm:hidden">
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   // Loading skeleton
@@ -401,8 +534,8 @@ export default function ParliamentaryPage() {
                     <ErrorState message={error} onRetry={fetchConstituencies} />
                   </td>
                 </tr>
-              ) : filteredConstituencies.length > 0 ? (
-                filteredConstituencies.map((constituency) => (
+              ) : currentConstituencies.length > 0 ? (
+                currentConstituencies.map((constituency) => (
                   <tr
                     key={constituency.id}
                     className="hover:bg-gray-50 transition-colors"
@@ -452,6 +585,9 @@ export default function ParliamentaryPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        <PaginationControls />
       </div>
 
       {/* Selected Constituency Results */}

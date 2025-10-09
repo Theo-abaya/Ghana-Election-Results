@@ -16,14 +16,12 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import { getAllRegions, getRegionResults } from "../services/api";
 import { useRegionWebSocket } from "../hooks/useWebSocket";
 import { showToast } from "../utils/toast";
 import type { Region, RegionResult } from "../types";
+import GhanaElectoralMap from "../components/GhanaElectoralMap";
 
 export default function RegionsPage() {
   const [regions, setRegions] = useState<Region[]>([]);
@@ -34,7 +32,6 @@ export default function RegionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Monitor online/offline status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -114,7 +111,6 @@ export default function RegionsPage() {
     totalVotes: regions.reduce((sum, r) => sum + (r.totalVotes || 0), 0),
   };
 
-  // Prepare data for regional comparison chart
   const regionalChartData = regions.slice(0, 10).map((r) => ({
     name: r.name.replace(/_/g, " ").substring(0, 15),
     votes: r.totalVotes,
@@ -137,7 +133,6 @@ export default function RegionsPage() {
     return null;
   };
 
-  // Loading skeleton
   const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -156,7 +151,6 @@ export default function RegionsPage() {
     </div>
   );
 
-  // Error state component
   const ErrorState = ({
     message,
     onRetry,
@@ -181,7 +175,6 @@ export default function RegionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Offline Banner */}
       {!isOnline && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center gap-3">
           <WifiOff className="w-5 h-5 text-orange-600 flex-shrink-0" />
@@ -194,7 +187,6 @@ export default function RegionsPage() {
         </div>
       )}
 
-      {/* Header Section */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 sm:p-8 text-white shadow-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
@@ -256,7 +248,32 @@ export default function RegionsPage() {
         </div>
       </div>
 
-      {/* Regional Comparison Chart */}
+      {!loading && !error && regions.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
+            Interactive Electoral Map
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Click any region to view detailed results below
+          </p>
+          <GhanaElectoralMap
+            regions={regions}
+            onRegionClick={(regionName) => {
+              fetchRegionResult(regionName);
+              setTimeout(() => {
+                const element = document.getElementById("region-details");
+                if (element) {
+                  element.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              }, 100);
+            }}
+          />
+        </div>
+      )}
+
       {!loading && !error && regions.length > 0 && (
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
@@ -287,7 +304,6 @@ export default function RegionsPage() {
         </div>
       )}
 
-      {/* Regional Cards Grid */}
       {loading ? (
         <LoadingSkeleton />
       ) : error ? (
@@ -305,7 +321,6 @@ export default function RegionsPage() {
               className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 border border-gray-100 overflow-hidden cursor-pointer"
               onClick={() => fetchRegionResult(region.name)}
             >
-              {/* Region Header */}
               <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-4 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -320,7 +335,6 @@ export default function RegionsPage() {
                 </div>
               </div>
 
-              {/* Region Stats */}
               <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -358,9 +372,11 @@ export default function RegionsPage() {
         </div>
       )}
 
-      {/* Selected Region Details */}
       {regionResult && (
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-6">
+        <div
+          id="region-details"
+          className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-6"
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 line-clamp-2">
               {regionResult.region.name.replace(/_/g, " ")} - Detailed Results
@@ -373,7 +389,6 @@ export default function RegionsPage() {
             </button>
           </div>
 
-          {/* Presidential Results in Region */}
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
               Presidential Results
@@ -421,7 +436,6 @@ export default function RegionsPage() {
             </div>
           </div>
 
-          {/* Parliamentary Summary */}
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
               Parliamentary Results ({regionResult.parliamentary.totalSeats}{" "}
@@ -460,7 +474,6 @@ export default function RegionsPage() {
             </div>
           </div>
 
-          {/* Regional Statistics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-purple-50 rounded-lg p-3 sm:p-4">
               <p className="text-xs sm:text-sm text-gray-600 mb-1">

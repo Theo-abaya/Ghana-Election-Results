@@ -57,17 +57,6 @@ export default function LoginPage() {
     );
   };
 
-  const handleDemoLogin = (role: "admin" | "officer") => {
-    if (role === "admin") {
-      setEmail("admin@electionhub.com");
-      setPassword("Admin@123");
-    } else {
-      setEmail("officer@electionhub.com");
-      setPassword("Officer@123");
-    }
-    showToast.info(`Demo credentials loaded for ${role}`);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-6xl">
@@ -150,29 +139,6 @@ export default function LoginPage() {
 
             {/* Login Card */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              {/* Demo Credentials Banner */}
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm font-semibold text-blue-900 mb-2">
-                  Demo Accounts:
-                </p>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleDemoLogin("admin")}
-                    className="w-full text-left text-xs text-blue-700 hover:text-blue-900 bg-white px-3 py-2 rounded border border-blue-200 hover:border-blue-300 transition-colors"
-                  >
-                    <span className="font-semibold">Admin:</span>{" "}
-                    admin@electionhub.com / Admin@123
-                  </button>
-                  <button
-                    onClick={() => handleDemoLogin("officer")}
-                    className="w-full text-left text-xs text-blue-700 hover:text-blue-900 bg-white px-3 py-2 rounded border border-blue-200 hover:border-blue-300 transition-colors"
-                  >
-                    <span className="font-semibold">Officer:</span>{" "}
-                    officer@electionhub.com / Officer@123
-                  </button>
-                </div>
-              </div>
-
               {/* Error Alert */}
               {error && (
                 <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 animate-shake">
