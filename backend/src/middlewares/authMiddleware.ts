@@ -3,7 +3,11 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Role } from "@prisma/client";
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret"; // ⚠️ Always set in .env
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("❌ ERROR: JWT_SECRET not loaded. Check your .env file.");
+  throw new Error("JWT_SECRET missing in environment");
+}
 
 // Extend Express Request type to include authenticated user
 export interface AuthRequest extends Request {
@@ -35,13 +39,13 @@ export const authenticateJWT = (
     req.user = decoded;
     return next();
   } catch (error) {
+    console.error("❌ JWT verification failed:", error);
     return res.status(403).json({ message: "Invalid or expired token" });
   }
 };
 
 /**
  * ✅ Middleware: Role-based Authorization
- * Example usage: router.post("/admin", authenticateJWT, authorizeRole([Role.ADMIN]), handler)
  */
 export const authorizeRole =
   (roles: Role[]) => (req: AuthRequest, res: Response, next: NextFunction) => {
