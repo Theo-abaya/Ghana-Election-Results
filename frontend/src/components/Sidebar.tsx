@@ -1,8 +1,19 @@
-import { Link, useLocation } from "react-router-dom";
-import { X, Vote, Users, Globe, Send, Shield } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  X,
+  Vote,
+  Users,
+  Globe,
+  Send,
+  Shield,
+  LogOut,
+  User,
+  ChevronDown,
+} from "lucide-react";
 import logoImage from "../assets/Election_hub.png";
 import { useState, useEffect } from "react";
-import { getCurrentUser } from "../services/api";
+import { getCurrentUser, logout } from "../services/api";
+import { showToast } from "../utils/toast";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,19 +22,29 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
-    checkUserRole();
+    fetchUserInfo();
   }, []);
 
-  const checkUserRole = async () => {
+  const fetchUserInfo = async () => {
     try {
       const user = await getCurrentUser();
-      setIsAdmin(user.role === "ADMIN");
+      setUserEmail(user.email);
+      setUserRole(user.role);
     } catch (error) {
-      console.error("Error checking user role:", error);
+      console.error("Error fetching user info:", error);
     }
+  };
+
+  const handleLogout = () => {
+    showToast.success("Logged out successfully");
+    logout();
+    navigate("/login");
   };
 
   const navItems = [
@@ -60,6 +81,11 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     },
   ];
 
+  // Filter nav items based on user role
+  const filteredNavItems = navItems.filter((item) =>
+    item.roles.includes(userRole)
+  );
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -71,11 +97,11 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       )}
 
       <aside
-        className={`fixed md:static z-40 top-0 left-0 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out
+        className={`fixed md:static z-40 top-0 left-0 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col
         ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img
@@ -102,11 +128,11 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
             Navigation
           </div>
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -128,13 +154,61 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <div className="text-xs text-gray-500 text-center">
-            <p className="font-semibold text-gray-700 mb-1">Need Help?</p>
-            <a href="#" className="text-blue-600 hover:underline">
-              Contact Support
-            </a>
+        {/* User Menu */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                  {userEmail.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-gray-900 truncate max-w-[150px]">
+                    {userEmail}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {userRole.replace("_", " ")}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform ${
+                  showUserMenu ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                <Link
+                  to="/dashboard/profile"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  <User size={18} className="text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Profile Settings
+                  </span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left border-t border-gray-100"
+                >
+                  <LogOut size={18} className="text-red-600" />
+                  <span className="text-sm font-medium text-red-600">
+                    Log Out
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
