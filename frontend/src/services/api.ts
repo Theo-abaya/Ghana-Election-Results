@@ -130,8 +130,18 @@ export const getConstituenciesByRegion = async (region: string) => {
   return response.data;
 };
 
-export const createConstituency = async (name: string, region: string) => {
-  const response = await api.post("/constituencies", { name, region });
+export const createConstituency = async (
+  name: string,
+  region: string,
+  pollingStations?: number,
+  registeredVoters?: number
+) => {
+  const response = await api.post("/constituencies", {
+    name,
+    region,
+    pollingStations,
+    registeredVoters,
+  });
   return response.data;
 };
 
@@ -179,6 +189,25 @@ export const createPollingStation = async (data: {
   return response.data;
 };
 
+export const updatePollingStation = async (
+  id: string,
+  data: {
+    name?: string;
+    code?: string;
+    location?: string;
+    registeredVoters?: number;
+    rejectedVotes?: number;
+  }
+) => {
+  const response = await api.put(`/polling-stations/${id}`, data);
+  return response.data;
+};
+
+export const deletePollingStation = async (id: string) => {
+  const response = await api.delete(`/polling-stations/${id}`);
+  return response.data;
+};
+
 // ============================================
 // PARTIES
 // ============================================
@@ -200,6 +229,23 @@ export const createParty = async (data: {
   logoUrl?: string;
 }) => {
   const response = await api.post("/parties", data);
+  return response.data;
+};
+export const updateParty = async (
+  id: string,
+  data: {
+    name?: string;
+    abbreviation?: string;
+    color?: string;
+    logoUrl?: string;
+  }
+) => {
+  const response = await api.put(`/admin/parties/${id}`, data);
+  return response.data;
+};
+
+export const deleteParty = async (id: string) => {
+  const response = await api.delete(`/admin/parties/${id}`);
   return response.data;
 };
 
@@ -225,13 +271,117 @@ export const updateResult = async (id: string, votes: number) => {
 // CANDIDATES
 // ============================================
 
-export const createCandidate = async (data: {
+export const getAllCandidatesAdmin = async (
+  type?: string,
+  constituencyId?: string
+) => {
+  const params: any = {};
+  if (type) params.type = type;
+  if (constituencyId) params.constituencyId = constituencyId;
+
+  const response = await api.get("/admin/candidates", { params });
+  return response.data;
+};
+
+export const createCandidateAdmin = async (data: {
   name: string;
   type: "PRESIDENTIAL" | "PARLIAMENTARY";
   partyId: string;
   constituencyId?: string;
 }) => {
-  const response = await api.post("/candidates", data);
+  const response = await api.post("/admin/candidates", data);
+  return response.data;
+};
+
+export const updateCandidateAdmin = async (
+  id: string,
+  data: {
+    name?: string;
+    partyId?: string;
+    constituencyId?: string;
+  }
+) => {
+  const response = await api.put(`/admin/candidates/${id}`, data);
+  return response.data;
+};
+
+export const deleteCandidateAdmin = async (id: string) => {
+  const response = await api.delete(`/admin/candidates/${id}`);
+  return response.data;
+};
+// ============================================
+// ADMIN - USER MANAGEMENT
+// ============================================
+
+export const getAllUsers = async () => {
+  const response = await api.get("/admin/users");
+  return response.data;
+};
+
+export const deleteUser = async (id: string) => {
+  const response = await api.delete(`/admin/users/${id}`);
+  return response.data;
+};
+
+export const updateUser = async (
+  id: string,
+  data: {
+    email?: string;
+    role?: string;
+  }
+) => {
+  const response = await api.put(`/admin/users/${id}`, data);
+  return response.data;
+};
+// ============================================
+// ADMIN - SYSTEM SETTINGS
+// ============================================
+
+export const getSystemSettings = async () => {
+  const response = await api.get("/admin/settings");
+  return response.data;
+};
+
+export const updateSystemSettings = async (settings: {
+  allowResultSubmission?: boolean;
+  requireApproval?: boolean;
+  enableNotifications?: boolean;
+  maintenanceMode?: boolean;
+}) => {
+  const response = await api.put("/admin/settings", settings);
+  return response.data;
+};
+
+// ============================================
+// ADMIN - AUDIT LOGS
+// ============================================
+
+export const getAuditLogs = async (limit = 50, offset = 0) => {
+  const response = await api.get("/admin/audit-logs", {
+    params: { limit, offset },
+  });
+  return response.data;
+};
+
+// ============================================
+// ADMIN - DATA EXPORT
+// ============================================
+
+export const exportData = async (format: string, dataTypes: string[]) => {
+  const response = await api.post(
+    "/admin/export",
+    { format, dataTypes },
+    { responseType: format === "json" ? "json" : "blob" }
+  );
+  return response.data;
+};
+
+// ============================================
+// ADMIN - DASHBOARD STATISTICS
+// ============================================
+
+export const getDashboardStats = async () => {
+  const response = await api.get("/admin/stats");
   return response.data;
 };
 
