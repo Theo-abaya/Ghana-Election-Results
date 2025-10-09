@@ -1,8 +1,8 @@
 import { Router } from "express";
 import {
   getAllParties,
-  getPartyById,
   createParty,
+  getPartyById,
 } from "../controllers/partyController";
 import { authenticateJWT, authorizeRole } from "../middlewares/authMiddleware";
 import { Role } from "@prisma/client";

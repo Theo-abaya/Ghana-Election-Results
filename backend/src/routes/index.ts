@@ -5,6 +5,7 @@ import pollingStationRoutes from "./pollingStationRoutes";
 import resultRoutes from "./resultRoutes";
 import partyRoutes from "./partyRoutes";
 import regionRoutes from "./regionRoutes";
+import adminRoutes from "./adminRoutes";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/regions", regionRoutes);
 router.use("/constituencies", constituencyRoutes);
 router.use("/polling-stations", pollingStationRoutes);
 router.use("/parties", partyRoutes);
+router.use("/admin", adminRoutes);
 
 // 404 handler for undefined routes - FIXED
 router.use((_req, res) => {
